@@ -1,0 +1,41 @@
+{
+  "title": "AI-Powered Meta-Analysis Automation",
+  "description": "R-based pipeline for evidence synthesis and meta-analysis: search strategies, OpenAlex querying, screening, tagging, keyword extraction, classification, and transparent reporting.",
+  "creators": [
+    {
+      "name": "Muller, Lolita",
+      "orcid": "0009-0002-8345-7219",
+      "affiliation": "Alliance of Bioversity International and CIAT"
+    },
+    {
+      "name": "Joshi, Namita",
+      "orcid": "0009-0006-1473-7718",
+      "affiliation": "Alliance of Bioversity International and CIAT"
+    },
+    {
+      "name": "Rosenstock, Todd",
+      "orcid": "0000-0002-1958-9500",
+      "affiliation": "Alliance of Bioversity International and CIAT"
+    },
+    {
+      "name": "Steward, Peter",
+      "orcid": "0000-0003-3985-4911",
+      "affiliation": "Alliance of Bioversity International and CIAT"
+    }
+  ],
+  "license": "MIT",
+  "keywords": [
+    "evidence synthesis",
+    "meta-analysis",
+    "agriculture",
+    "climate action"
+  ],
+  "related_identifiers": [
+    {
+      "relation": "isSupplementTo",
+      "scheme": "url",
+      "identifier": "https://github.com//ERAgriculture/AI-Powered-Meta-Analysis-Automation"
+    }
+  ],
+  "notes": "Archived from a GitHub release; see repository docs and reports for methods."
+}
