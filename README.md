@@ -1,6 +1,6 @@
 # AI-Powered Meta-Analysis Automation: Part of the ERA data ecosystem
 
-Welcome to the ERA AI Meta-Analysis Repository. This project advances evidence synthesis and meta-analysis by automating the repetitive while keeping the complex scientific questions squarely in the hands of domain experts.
+Welcome to the ERA AI Meta-Analysis Repository, part of the Sustainable Farming Program. This project advances evidence synthesis and meta-analysis by automating the repetitive while keeping the complex scientific questions squarely in the hands of domain experts.
 
 At a high level, the workflow systematizes literature discovery and triage using OpenAlex (with optional benchmarking against Web of Science), then applies AI-assisted screening, tagging, and keyword extraction to rapidly structure information for downstream analysis. The goal is not to replace scientific judgment, but to amplify it, freeing scientists to interrogate mechanisms, uncertainty, and context, while the pipeline handles query engineering, data wrangling, and transparent reporting.
 
@@ -137,8 +137,9 @@ This project is led and implemented by the **Climate Action Lever** of the **All
 
 ## Acknowledgments
 
-This work is supported under the **Climate** area within the **CGIAR Excellence in Agronomy Initiative (EiA)**.
+This work is supported under the **Climate** area within the **CGIAR Sustainable Farming Program (SP)**.
 
----
+<img width="1549" height="1126" alt="Alliance Logo Refresh-EN color" src="https://github.com/user-attachments/assets/01c91379-50b9-456b-82fe-553a151a86f6" />
+![Short Logo - Green - SF](https://github.com/user-attachments/assets/c58ab4f2-665a-4256-9986-78d8addd4482)
 
-![Logos](https://github.com/user-attachments/assets/d3112c9d-6392-46a2-9fc6-8d0b72e6aec1)
+
