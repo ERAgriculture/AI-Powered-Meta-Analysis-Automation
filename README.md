@@ -12,10 +12,10 @@ The repository ships with ready-to-knit reports and configurable YAML policies s
 
 This repository aims to:
 
-* Provide a **reproducible, R-based pipeline** for literature discovery and triage with OpenAlex.
-* Enable **AI-assisted screening and tagging** for rapid evidence mapping.
-* Offer **benchmarking** against WoS exports and simple evaluation metrics.
-* Produce **shareable HTML reports** (GitHub Pages) for transparency and collaboration.
+- Provide a reproducible, R-based pipeline for literature discovery and triage across multiple scholarly sources (e.g., OpenAlex, and optionally Web of Science/Scopus/others).
+- Enable AI‑assisted screening, tagging, and structured data extraction to accelerate evidence mapping and meta‑analysis.
+- Support benchmarking and quality assessment (e.g., inter‑annotator checks, hold‑out labels, and cross‑source comparisons) with simple, transparent metrics.
+- Produce shareable, versioned HTML reports and machine‑readable outputs (e.g., Parquet/JSONL) for transparency and collaboration.
 
 ---
 
