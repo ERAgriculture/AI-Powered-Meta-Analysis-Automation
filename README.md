@@ -137,7 +137,7 @@ This project is led and implemented by the **Climate Action Lever** of the **All
 
 ## Acknowledgments
 
-This work is supported under the **Climate** area within the **CGIAR Sustainable Farming Program (SP)**.
+This work is supported under the **Climate** area within the **CGIAR Sustainable Farming Program (SFP)**.
 
 <p align="center">
   <img src="https://github.com/user-attachments/assets/06204522-60f2-4996-87af-2c985ee9390f" alt="Alliance Logo Refresh-EN white" width="300">
