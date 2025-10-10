@@ -101,12 +101,12 @@ If you use this repository, please cite the software and, when available, the ar
 
 ```bibtex
 @software{meta_ai_automation,
-  title = {AI-Powered Meta-Analysis Automation},
-  author = {Muller, Lolita and collaborators},
-  year = {2025},
-  version = {vX.Y.Z},
-  doi = {10.5281/zenodo.YYYYYYY},
-  url = {https://github.com/eragriculture/AI}
+title = {AI-Powered Meta-Analysis Automation},
+author = {Muller, Lolita and Joshi, Namita and Rosenstock, Todd and Steward, Peter},
+year = {2025},
+version = {vX.Y.Z},
+doi = {10.5281/zenodo.YYYYYYY},
+url = {https://github.com/eragriculture/AI}
 }
 ```
 
