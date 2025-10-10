@@ -1,0 +1,574 @@
+---
+title: "Herd information with GPT"
+output: html_document
+date: "2025-05-21"
+---
+# Automated Extraction from PDFs (R+GPT‑4o‑mini)
+
+## Overview 
+
+This guide presents a compact, end‑to‑end workflow that automatically turns stacks of livestock‑research PDFs into clean, structured data on the animals’ physiological or production stage. It harvests files from designated folders, applies OCR when needed, slices out the Abstract and Methods, and then asks GPT‑4o‑mini to extract the relevant herd‑stage descriptors.The approach is compelling because it fuses conventional PDF parsing with state‑of‑the‑art language modelling, proving that what once took hours of human effort can now be reproduced in minutes and for mere cents.
+
+## Extract the text from PDFs
+
+Before we involve GPT, we need clean, well-structured text. This chunk automates that prep work: it scans every livestock PDF in the chosen folders, fixes tricky layouts (like two-column pages), runs OCR when the pages are just images, and neatly slices out only the Abstract and Methods parts we care about. It then stores those excerpts—one row per paper—in a master table and marks any suspicious files for manual review. In short, it turns a messy pile of PDFs into a tidy dataset that’s ready for accurate, low-cost GPT extraction.
+
+```{r, message=FALSE, warning=FALSE,results='hide'}
+########## 0  Libraries & quiet Poppler #######################################
+library(pdftools)  ; options(pdftools.quiet = TRUE)
+library(stringr)   ; library(dplyr)   ; library(tibble)
+library(future.apply);
+library(tidyr)     ; library(purrr)   ; library(DT)
+library(glue)      ; library(jsonlite); library(ellmer)
+
+########## 1  PDF list ########################################################
+open_dir  <- "C:/Users/mlolita/OneDrive - CGIAR/ERA/Data Entry/pdfs/Livestock/Open access"
+close_dir <- "C:/Users/mlolita/OneDrive - CGIAR/ERA/Data Entry/pdfs/Livestock/Closed access"
+
+all_pdfs <- c(
+  list.files(open_dir,  "\\.pdf$", full.names = TRUE, recursive = TRUE),
+  list.files(close_dir, "\\.pdf$", full.names = TRUE, recursive = TRUE)
+)
+#set.seed(1); all_pdfs <- sample(all_pdfs, 200)   # demo limit
+
+########## 2  Regex dictionaries ##############################################
+abs_s <- "(?im)^\\s*(?:Abstract|Summary|Résumé|Resumen|A\\s+B\\s+S\\s+T\\s+R\\s+A\\s+C\\s+T)\\s*[:\\.]?$"
+abs_e <- "(?i)\\b(?:\\d{0,2}[\\.:\\)]?\\s*)?(Introduction|Background)\\b"
+met_s <- "(?i)(?:\\d+(?:\\.\\d+)*\\s*)?(?:Materials?\\s*(?:and|&)\\s*Methods?|Methods?\\s*(?:and|&)\\s*Materials?|Methodology\\b|(?-i:METHODS)\\b)"
+met_e <- "\\b(Results?|Discussion|Conclusion)\\b"
+
+########## 3  Helpers for two-column handling #################################
+has_pages <- "pages" %in% names(formals(pdf_text))
+
+# 3a ── identify 2-column layout on a single page -----------------------------
+is_two_col <- function(pg, gap = 50) {
+  first_x <- pg %>%                      # pg = pdf_data(path)[[page]]
+    group_by(y) %>% summarise(x = min(x), .groups = "drop") %>% pull(x)
+  if (length(first_x) < 10)              return(FALSE)
+  if (length(unique(first_x)) < 2)       return(FALSE)   # all lines start same x
+  km <- stats::kmeans(first_x, centers = 2, iter.max = 10)
+  abs(diff(sort(km$centers))) > gap                      # TRUE → two columns
+}
+
+# 3b ── rebuild one page left→right ------------------------------------------
+reflow_page <- function(path, page_no) {
+  pg <- pdf_data(path)[[page_no]]
+  pg <- pg %>%
+    mutate(col_id = ifelse(x < median(x), 1, 2)) %>%
+    arrange(col_id, y, x)
+  paste(pg$text, collapse = " ")
+}
+
+########## 4  Fast first-pages reader (2-col safe + OCR fallback) #############
+grab_pages <- function(path, n = 6) {
+
+  n_tot <- tryCatch(pdf_info(path)$pages, error = function(e) 0L)
+  if (n_tot == 0L) return("")                               # unreadable PDF
+
+  out <- character(min(n, n_tot))
+
+  for (p in seq_along(out)) {
+
+    raw <- if (has_pages) pdf_text(path, pages = p) else pdf_text(path)[p]
+    if (is.null(raw) || nchar(raw) == 0) next               # empty page
+
+    pg  <- tryCatch(pdf_data(path)[[p]], error = function(e) NULL)
+    out[p] <- if (!is.null(pg) && is_two_col(pg))
+                reflow_page(path, p) else raw
+  }
+
+  joined <- paste(out, collapse = "\n")
+  if (nchar(joined) > 400) return(joined)                   # good enough
+
+  ocr <- if (has_pages)
+           pdf_ocr_text(path, pages = seq_len(min(n, n_tot)),
+                        dpi = 200, language = "eng")
+         else
+           pdf_ocr_text(path, dpi = 200, language = "eng")[seq_len(min(n, n_tot))]
+  paste(ocr, collapse = "\n")
+}
+
+########## 5  Flexible slicers ###############################################
+slice_generic <- function(txt, start_pat, end_pat) {
+  st <- str_locate(txt, start_pat)[1, 1]
+  if (is.na(st)) return(NA_character_)
+  stops <- str_locate_all(txt, end_pat)[[1]]
+  stops <- stops[stops[,1] > st, , drop = FALSE]
+  ed <- if (nrow(stops)) stops[1,1] - 1 else nchar(txt)
+  str_trim(str_sub(txt, st, ed))
+}
+
+slice_abstract <- function(txt) {
+  st <- str_locate(txt, abs_s)[1, 1]
+  if (is.na(st)) st <- 1
+  stops <- str_locate_all(txt, abs_e)[[1]]
+  stops <- stops[stops[,1] > st, , drop = FALSE]
+  if (!nrow(stops)) return(NA_character_)
+  ed <- stops[1,1] - 1
+  str_trim(str_sub(txt, st, ed))
+}
+
+########## 6  Per-file worker #################################################
+worker <- function(path) {
+  raw <- grab_pages(path, 6)
+  tibble(
+    File     = basename(path),
+    Abstract = slice_abstract(raw),
+    Methods  = slice_generic(raw, met_s, met_e),
+    Raw      = list(raw)
+  )
+}
+
+plan(multisession)
+
+########## 7  Batch run & flag (parallel + RNG-safe) ##########################
+articles_tbl <- future_lapply(
+    all_pdfs,
+    worker,
+    future.seed = TRUE
+  ) %>%
+  bind_rows() %>%
+  mutate(
+    Needs_Review = if_else(
+      is.na(Methods) | str_length(Methods) < 500,
+      "⚠️ Yes",
+      "No"
+    )
+  )
+
+
+
+########## 8  Raw-text inspector #############################################
+inspect_pdf <- function(file_name, pages = 6) {
+  path <- all_pdfs[basename(all_pdfs) == file_name]
+  if (!length(path)) stop("File not in current sample.")
+  cached <- articles_tbl$Raw[articles_tbl$File == file_name][[1]]
+  if (pages <= 3) return(cat(cached))
+  cat(grab_pages(path, pages))
+}
+
+articles_tbl <- articles_tbl %>%
+  mutate(Code = str_extract(File, "^[A-Z]+\\d+"))
+
+
+```
+
+Filter for only sheep cattle and goat papers
+
+
+```{r,message=FALSE,warning=FALSE}
+
+# Set up connection to S3 bucket
+s3 <- s3fs::S3FileSystem$new(anonymous = TRUE)
+era_s3 <- "s3://digital-atlas/era"
+
+# List the files in the s3 bucket
+files <- s3$dir_ls(file.path(era_s3,"data"))
+
+# Identify the latest skinny_cow_2022-YYYY-MM-DD.RData file
+files <- tail(grep(".RData", grep("skinny_cow_2022", files, value=TRUE), value=TRUE), 1)
+
+# Download to local if not already present
+save_path <- file.path(getwd(), basename(files))
+if(!file.exists(save_path)){
+  s3$file_download(files, save_path, overwrite = TRUE)
+}
+
+# Load the data
+livestock_metadata <- miceadds::load.Rdata2(file=basename(save_path), path=dirname(save_path))
+
+subset_animals <- livestock_metadata$`Prod.Out` %>%
+  filter(P.Product %in% c("Cattle", "Sheep", "Goat"))
+
+codes<-subset_animals$B.Code
+
+```
+
+
+```{r}
+papers_to_extract<-articles_tbl%>%
+  filter(Code %in% codes)
+```
+
+## GPT settings
+
+```{r}
+
+chat <- chat_openai(model = "gpt-4o-mini")
+```
+
+### Training data
+
+In courageous camel we did extract herd info. We can then use this dataset as a training dataset for our method
+
+```{r}
+s3 <- s3fs::S3FileSystem$new(anonymous = TRUE)
+era_s3 <- "s3://digital-atlas/era"
+
+# List the files in the s3 bucket
+files <- s3$dir_ls(file.path(era_s3,"data"))
+
+# Identify the latest skinny_cow_2022-YYYY-MM-DD.RData file
+files <- tail(grep(".RData", grep("courageous_camel_2024", files, value=TRUE), value=TRUE), 1)
+
+# Download to local if not already present
+save_path <- file.path(getwd(), basename(files))
+if(!file.exists(save_path)){
+  s3$file_download(files, save_path, overwrite = TRUE)
+}
+
+
+# Load the data
+camel <- miceadds::load.Rdata2(file=basename(save_path), path=dirname(save_path))
+
+subset_animals <- camel$Herd.Out %>%
+  filter(V.Product %in% c("Cattle", "Sheep", "Goat"))
+
+codes_training<-subset_animals$B.Code
+
+herd_training<-camel$Herd.Out%>%
+   select(c("B.Code","Herd.Sex","Herd.Stage","Herd.Parity"))%>%
+  unique()
+
+papers_to_train<-articles_tbl%>%
+  filter(Code %in% codes_training)
+```
+
+## GPT extraction 
+
+```{r,message=FALSE,warning=FALSE,results='hide'}
+# ── prompt builder -----------------------------------------------------------
+make_herd_prompt <- function(section_name, txt) {
+  glue::glue("
+You are reading the {section_name} of a livestock research paper.
+
+Text:
+\"\"\"
+{txt }
+\"\"\"
+
+Identify the physiological or production stage and sex of the animals experimented in the study (e.g., Adult Male,Gestating Female, Lactating Female, Young Male, Calf Nursing Female, Yearling Female etc..).Extract the stage exactly as it appears in the text and deduce the sex.
+Return only one stage if the study focuses on a single category.
+If the study clearly reports measures for more than one distinct stage, list them comma-separated.
+Return each stage once only. If no stage is found, return NA.
+Be precise and concise. Respond with the correct stage(s) and sex only — no explanation.
+")
+}
+
+
+# ── single-call extractor (with 2-second throttle) ----------------------------
+extract_herd_stage <- function(section_name, txt) {
+  if (is.na(txt) || !nzchar(txt)) return(NA_character_)
+  prompt  <- make_herd_prompt(section_name, txt)
+  answer  <- chat_openai(model = "gpt-4o-mini")$chat(prompt)
+  Sys.sleep(2)                               # ← simple rate-limit line
+  stage <- trimws(answer)
+  if (!nzchar(stage)) return(NA_character_)
+  stage
+}
+
+
+# ── process 100 “no-review” papers row-by-row ---------------------------------
+herd_tbl <- papers_to_train %>%
+  filter(Needs_Review == "No") %>%
+  rowwise() %>%
+  mutate(
+    Herd_Abstract = extract_herd_stage("Abstract", Abstract),
+    Herd_Methods  = extract_herd_stage("Methods",  Methods)
+  ) %>%
+  ungroup() %>%
+  select(File, Abstract, Herd_Abstract, Methods, Herd_Methods)
+
+```
+
+
+```{r}
+# Ensure codes align in both tables
+herd_tbl_with_code <- papers_to_train %>%
+  filter(Needs_Review == "No") %>%
+  select(Code) %>%
+  bind_cols(herd_tbl)
+
+# Join GPT results with gold-standard training data
+comparison_tbl <- herd_tbl_with_code %>%
+  left_join(herd_training, by = c("Code" = "B.Code"))
+
+
+subset<-comparison_tbl%>%
+  select(c("Code","Herd_Abstract","Herd_Methods","Herd.Sex","Herd.Stage","Herd.Parity"))
+
+
+#write_csv(subset, "herd_extraction_data2.csv")          # comma-separated
+
+
+
+
+```
+
+
+## Verification of training data 
+```{r}
+
+
+# 0 ── simple one-to-one synonym dictionary  ----------------------------------
+syn_map <- c(
+  lamb  = "young",
+  lambs = "young",
+  kid   = "young",
+  kids  = "young",
+  growing="young"
+  # add more if needed, e.g.  "calf" = "young"
+)
+
+# 1 ── Tokeniser: returns full phrases *and* single words, with synonym swap ---
+tidy_tokens <- function(x) {
+  if (is.na(x) || !nzchar(trimws(x))) return(character(0))
+
+  # A) split the *lists* of categories
+  phrases <- str_split(
+    x,
+    pattern = ",|;|/|\\band\\b|\\b&\\b",
+    simplify = TRUE
+  ) |>
+    str_trim() |>
+    str_to_lower() |>
+    str_replace_all("[^a-z0-9 ]+", "") |>
+    discard(~ .x == "")
+
+  # B) swap synonyms inside phrases
+  for (i in seq_along(syn_map)) {
+    pat <- paste0("\\b", names(syn_map)[i], "\\b")
+    phrases <- str_replace_all(phrases, pat, syn_map[i])
+  }
+
+  # C) split phrases into single words
+  words <- str_split(phrases, "\\s+", simplify = FALSE) |>
+    unlist()
+
+  # crude singulariser
+  words <- sub("s$", "", words)
+
+  # D) synonym swap on single words, too
+  words <- recode(words, !!!syn_map, .default = words)
+
+  unique(c(phrases, words))
+}
+
+# 2 ── Per-row evaluation -----------------------------------------------------
+eval_tbl <- subset |>                         # ← your existing tibble
+  mutate(
+    abs_tok     = map(Herd_Abstract, tidy_tokens),
+    met_tok     = map(Herd_Methods,  tidy_tokens),
+    sex_truth   = map(Herd.Sex,      tidy_tokens),
+    stage_truth = map(Herd.Stage,    tidy_tokens),
+
+    sex_abs_match   = map2_lgl(abs_tok,   sex_truth,
+                               \(p, t) if (length(t)) any(t %in% p) else NA),
+    sex_met_match   = map2_lgl(met_tok,   sex_truth,
+                               \(p, t) if (length(t)) any(t %in% p) else NA),
+    stage_abs_match = map2_lgl(abs_tok,   stage_truth,
+                               \(p, t) if (length(t)) any(t %in% p) else NA),
+    stage_met_match = map2_lgl(met_tok,   stage_truth,
+                               \(p, t) if (length(t)) any(t %in% p) else NA)
+  )
+
+# 3 ── Quick accuracy table ---------------------------------------------------
+accuracy_overview <- eval_tbl |>
+  summarise(
+    n              = n(),
+    sex_abs_acc    = mean(sex_abs_match,   na.rm = TRUE),
+    sex_met_acc    = mean(sex_met_match,   na.rm = TRUE),
+    stage_abs_acc  = mean(stage_abs_match, na.rm = TRUE),
+    stage_met_acc  = mean(stage_met_match, na.rm = TRUE)
+  )
+
+# helper: fallback if `scales::percent()` is unavailable --------------------
+to_pct <- function(x, digits = 1) sprintf(paste0("%.", digits, "f %%"), 100 * x)
+
+accuracy_tbl <- accuracy_overview %>% 
+  transmute(
+    `Papers (n)`        = n,
+    `Sex – Abstract`    = to_pct(sex_abs_acc),
+    `Sex – Methods`     = to_pct(sex_met_acc),
+    `Stage – Abstract`  = to_pct(stage_abs_acc),
+    `Stage – Methods`   = to_pct(stage_met_acc)
+  )
+
+knitr::kable(
+  accuracy_tbl,
+  format   = "markdown",
+  align    = c("r","c","c","c","c"),
+  caption  = "Table 1. Token-match accuracy of GPT extraction (higher = better)."
+)
+
+```
+
+-------------
+
+
+
+```{r}
+# herd_multiagent_goat_sheep_cattle.R
+# -----------------------------------------------------------------------------
+# Multi‑agent GPT‑4o‑mini pipeline  –  *clean rebuild* (v3.0 2025‑07‑02)
+# -----------------------------------------------------------------------------
+#  • Two extractors (prose / table) – first on merged Abstract+Methods.
+#  • If that hits the context‑length guard, re‑run the same two extractors on
+#    Abstract **and** Methods separately (4 calls total). Union the phrases.
+#  • Two mappers (exact / fuzzy). Prefer exact unless id == "NA" or "PARSE_ERR".
+#  • Robust error flags: TOO_LONG, CONN_ERR, PARSE_ERR, NA.
+#  • Explicit char‑length guards and per‑section truncation to avoid 128k limit.
+# -----------------------------------------------------------------------------
+# Output columns per paper: id, label, flag.  Accuracy summary at the end.
+# -----------------------------------------------------------------------------
+
+# ── 0  Libraries ──────────────────────────────────────────────────────────────
+library(readr)
+library(dplyr)
+library(stringr)
+library(purrr)
+library(glue)
+library(jsonlite)
+library(tidyr)
+
+`%||%` <- function(a, b) if (!is.null(a) && length(a) && !is.na(a)) a else b
+
+# ── 1  Ontology (Goat / Sheep / Cattle) ───────────────────────────────────────
+onto <- read_csv("herd_ontology.csv", show_col_types = FALSE) %>%
+  mutate(across(c(canonical_label, synonyms), str_trim)) %>%
+  mutate(canonical_label_lc = str_to_lower(canonical_label),
+         synonyms_lc        = str_to_lower(synonyms)) %>%
+  filter(species_group %in% c("Cattle", "Sheep", "Goat"))
+
+if (!"canonical_id" %in% names(onto))
+  onto <- onto %>% mutate(canonical_id = sprintf("HD%04d", row_number()))
+
+vocab_json <- onto %>%
+  transmute(id = canonical_id, label = canonical_label, synonyms) %>%
+  toJSON(auto_unbox = TRUE)
+
+# ── 2  GPT setup & shared helpers ─────────────────────────────────────────────
+chat <- chat_openai(model = "gpt-4o-mini")
+MAX_CHARS     <- 120000   # guard on full Abstract+Methods
+SECTION_TRUNC <- 30000    # truncate each section going into any prompt
+
+safe_nchar    <- function(x) ifelse(is.na(x), 0L, nchar(x))
+truncate_safe <- function(x) if (is.na(x)) "" else str_trunc(x, SECTION_TRUNC, "right", " …")
+
+safe_chat <- function(prompt) {
+  tryCatch(
+    list(resp = chat$chat(prompt), flag = NA_character_),
+    error = function(e) {
+      msg <- conditionMessage(e)
+      if (grepl("context length", msg, TRUE)) list(resp = NULL, flag = "TOO_LONG")
+      else list(resp = NULL, flag = "CONN_ERR")
+    }
+  )
+}
+
+# ── 3  Extraction prompts & helpers ──────────────────────────────────────────
+make_extract_prompt <- function(style, abs, meth) {
+  abs  <- truncate_safe(abs)
+  meth <- truncate_safe(meth)
+  if (style == "narr") {
+    glue("You are a livestock domain expert. Scan the **prose** in Abstract and Methods, list every phrase describing an animal physiological stage plus sex. Return a comma‑separated list or NA. No commentary.\n\n### ABSTRACT\n\"\"\"{abs}\"\"\"\n\n### METHODS\n\"\"\"{meth}\"\"\"")
+  } else {
+    glue("You are a livestock domain expert. Focus on **tables or bullet lists** in Abstract and Methods. Extract every row describing an animal physiological stage plus sex. Return a comma‑separated list or NA. No commentary.\n\n### ABSTRACT\n\"\"\"{abs}\"\"\"\n\n### METHODS\n\"\"\"{meth}\"\"\"")
+  }
+}
+
+make_extract_single_prompt <- function(style, label, txt) {
+  txt <- truncate_safe(txt)
+  if (style == "narr") {
+    glue("You are a livestock domain expert. Scan the prose in the {label} to list every phrase describing an animal physiological stage plus sex. Return a comma‑separated list or NA. No commentary.\n\n### {toupper(label)}\n\"\"\"{txt}\"\"\"")
+  } else {
+    glue("You are a livestock domain expert. Focus on tables or bullets in the {label}. Extract every row describing an animal physiological stage plus sex. Return a comma‑separated list or NA. No commentary.\n\n### {toupper(label)}\n\"\"\"{txt}\"\"\"")
+  }
+}
+
+extract_one <- function(prompt) {
+  res <- safe_chat(prompt)
+  if (!is.na(res$flag)) return(list(phrases = character(), flag = res$flag))
+  txt <- str_trim(res$resp)
+  phrases <- if (txt == "NA") character() else str_split(txt, ",")[[1]] %>% str_trim()
+  list(phrases = phrases, flag = NA_character_)
+}
+
+extract_combined <- function(abs, meth) {
+  e1 <- extract_one(make_extract_prompt("narr", abs, meth))
+  e2 <- extract_one(make_extract_prompt("tabl", abs, meth))
+  list(phrases = unique(c(e1$phrases, e2$phrases)),
+       flag    = e1$flag %||% e2$flag)
+}
+
+extract_separate <- function(abs, meth) {
+  calls <- list(
+    list("narr", "Abstract", abs),
+    list("tabl", "Abstract", abs),
+    list("narr", "Methods",  meth),
+    list("tabl", "Methods",  meth))
+  results <- map(calls, ~extract_one(do.call(make_extract_single_prompt, .x)))
+  list(phrases = unique(unlist(map(results, "phrases"))),
+       flag    = reduce(map(results, "flag"), `%||%`, .init = NA_character_))
+}
+
+# ── 4  Mapping prompts & helpers ─────────────────────────────────────────────
+make_map_prompt <- function(mode, csv) {
+  header <- if (mode == "exact") "Map phrases **only** by exact match" else "Map phrases to the **closest** row"
+  glue("{header}. Return JSON: {{\"id\":\"HDxxxx\", \"label\":\"Canonical Label or NA\"}}\n\n### PHRASES\n{csv}\n\n### VOCABULARY\n{vocab_json}")
+}
+
+map_one <- function(mode, phrases) {
+  if (!length(phrases)) return(list(id = "NA", label = "NA"))
+  res <- safe_chat(make_map_prompt(mode, paste(phrases, collapse = ", ")))
+  if (!is.na(res$flag)) return(list(id = "NA", label = "NA", flag = res$flag))
+  tryCatch(jsonlite::fromJSON(res$resp), error = function(e) list(id = "PARSE_ERR", label = conditionMessage(e)))
+}
+
+choose_mapping <- function(exact, fuzzy) if (exact$id %>% identical("NA") || exact$id %>% identical("PARSE_ERR")) fuzzy else exact
+
+# ── 5  Per‑paper pipeline ────────────────────────────────────────────────────
+process_paper <- function(abs, meth) {
+  # master guard -------------------------------------------------------------
+  if (safe_nchar(abs) + safe_nchar(meth) > MAX_CHARS)
+    return(list(id = "NA", label = "NA", flag = "TOO_LONG"))
+
+  # extraction ---------------------------------------------------------------
+  ext <- extract_combined(abs, meth)
+  if (!is.na(ext$flag) && ext$flag == "TOO_LONG")
+    ext <- extract_separate(abs, meth)
+  if (!is.na(ext$flag))
+    return(list(id = "NA", label = "NA", flag = ext$flag))
+
+  # mapping ------------------------------------------------------------------
+  m_exact <- map_one("exact",   ext$phrases)
+  m_fuzzy <- map_one("closest", ext$phrases)
+  final   <- choose_mapping(m_exact, m_fuzzy)
+  final$flag <- m_exact$flag %||% m_fuzzy$flag
+  final
+}
+
+# ── 6  Run over papers ─────────────────────────────────────────────────────—
+herd_gpt <- papers_to_train %>%
+  filter(Needs_Review == "No") %>%
+  rowwise() %>%
+  mutate(res = list(process_paper(Abstract, Methods))) %>%
+  ungroup() %>%
+  unnest_wider(res)
+
+# ── 7  Accuracy snapshot ─────────────────────────────────────────────────────
+acc_tbl <- herd_gpt %>%
+  filter(is.na(flag)) %>%
+  left_join(select(herd_training, B.Code, Herd.Stage), by = c("Code" = "B.Code")) %>%
+  mutate(truth_id = Herd.Stage %>% str_to_lower() %>%
+           map_chr(~ onto$canonical_id[match(.x, onto$canonical_label_lc)] %||% "UNKNOWN"),
+         stage_ok = id == truth_id) %>%
+  summarise(papers_evaluated = n(), stage_accuracy = mean(stage_ok, na.rm = TRUE))
+
+print(acc_tbl)
+cat("\nFlag counts:\n"); print(table(herd_gpt$flag, useNA = "ifany"))
+
+
+```
+
+
