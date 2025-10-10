@@ -139,7 +139,8 @@ This project is led and implemented by the **Climate Action Lever** of the **All
 
 This work is supported under the **Climate** area within the **CGIAR Sustainable Farming Program (SP)**.
 
-![Alliance Logo Refresh-EN white](https://github.com/user-attachments/assets/06204522-60f2-4996-87af-2c985ee9390f)
-
-![Short Logo - Green - SF](https://github.com/user-attachments/assets/0e69d32a-a4fb-474e-a599-6aa87efdc10a)
-
+<p align="center">
+  <img src="https://github.com/user-attachments/assets/06204522-60f2-4996-87af-2c985ee9390f" alt="Alliance Logo Refresh-EN white" width="260">
+  &nbsp;&nbsp;&nbsp;
+  <img src="https://github.com/user-attachments/assets/0e69d32a-a4fb-474e-a599-6aa87efdc10a" alt="Short Logo - Green - SF" width="200">
+</p>
