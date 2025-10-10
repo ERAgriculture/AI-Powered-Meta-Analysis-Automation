@@ -122,8 +122,15 @@ If you use this repository, please cite the software and, when available, the ar
 
 This project is led and implemented by the **Climate Action Lever** of the **Alliance of Bioversity International and CIAT**.
 
-* **Lolita Muller** — *Senior Research Associate & Lead Developer*
+- **Lolita Muller** — *Senior Research Associate & Lead Developer*
   Email: [m.lolita@cgiar.org](mailto:m.lolita@cgiar.org)
+- **Namita Joshi** – *Research Specialist*  
+  Email: [n.joshi@cgiar.org](mailto:n.joshi@cgiar.org) 
+- **Todd Rosenstock** – *Principal Scientist*  
+  Email: [t.rosenstock@cgiar.org](mailto:t.rosenstock@cgiar.org)  
+- **Peter Steward** – *Scientist*  
+  Email: [p.steward@cgiar.org](mailto:p.steward@cgiar.org)  
+ 
 
 
 ---
