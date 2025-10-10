@@ -44,8 +44,6 @@ This repository aims to:
 
 ---
 
-
-
 ## Getting Started
 
 ### Setup (R)
@@ -87,26 +85,20 @@ Reload with `readRenviron("~/.Renviron")` inside R as needed.
 
 ## Citing
 
-If you use this repository, please cite the software and, when available, the archived release:
+If you use this repository, please cite the software and, when available, the archived release.
 
-**Software (concept DOI)**
-
-> *AI-Powered Meta-Analysis Automation.* Versioned software. DOI: `10.5281/zenodo.XXXXXXX` (concept).
-
-**This release**
-
-> *AI-Powered Meta-Analysis Automation vX.Y.Z*, DOI: `10.5281/zenodo.YYYYYYY` (version).
+**Software (concept DOI)**  
+> *AI-Powered Meta-Analysis Automation.* DOI: `10.5281/zenodo.17312467`.
 
 **BibTeX**
-
 ```bibtex
 @software{meta_ai_automation,
-title = {AI-Powered Meta-Analysis Automation},
-author = {Muller, Lolita and Joshi, Namita and Rosenstock, Todd and Steward, Peter},
-year = {2025},
-version = {vX.Y.Z},
-doi = {10.5281/zenodo.YYYYYYY},
-url = {https://github.com/eragriculture/AI}
+  title   = {AI-Powered Meta-Analysis Automation},
+  author  = {Muller, Lolita and Joshi, Namita and Rosenstock, Todd and Steward, Peter},
+  year    = {2025},
+  doi     = {10.5281/zenodo.17312467},
+  url     = {https://github.com/eragriculture/AI-Powered-Meta-Analysis-Automation},
+  note    = {Pre-release}
 }
 ```
 
