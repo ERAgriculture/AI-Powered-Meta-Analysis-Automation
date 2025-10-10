@@ -1,13 +1,6 @@
 # AI-Powered Meta-Analysis Automation: Part of the ERA data ecosystem
 
-Welcome to the **ERA AI Meta-Analysis Repository**, part of the Excellence in Agronomy Initiative (EiA). This repository provides R code and a workflow to automate key steps of evidence synthesis—**search term generation, OpenAlex querying, screening, tagging, keyword extraction, and classification**—with ready-to-knit reports.
-
-The current workflow focuses on building and testing search strategies with **OpenAlex**, benchmarking against **Web of Science (WoS)** exports where available, and producing transparent, reproducible outputs for agricultural and climate research topics.
-
-<div style="display: flex; justify-content: space-between;">
-  <img src="https://github.com/user-attachments/assets/5f9a3750-3135-48ea-a792-82ca028d3b5b" alt="pipeline-overview" width="48%" />
-  <img src="https://github.com/user-attachments/assets/c1cadbb6-3366-4eef-9bc3-b32d807a7d9b" alt="screening-tagging" width="48%" />
-</div>
+Welcome to the **ERA AI Meta-Analysis Repository**. This repository provides R code and a workflow to automate key steps of evidence synthesis—**search term generation, OpenAlex querying, screening, tagging, keyword extraction, and classification**—with ready-to-knit reports.
 
 Key automated tasks covered:
 
