@@ -135,14 +135,6 @@ This project is led and implemented by the **Climate Action Lever** of the **All
 
 ---
 
-## License
-
-* **Code**: MIT License (recommended for software).
-* **Docs & Reports**: CC-BY 4.0 (unless otherwise specified).
-  See [`LICENSE`](./LICENSE) for details.
-
----
-
 ## Acknowledgments
 
 This work is supported under the **Climate** area within the **CGIAR Excellence in Agronomy Initiative (EiA)**.
