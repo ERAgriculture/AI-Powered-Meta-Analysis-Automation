@@ -21,52 +21,34 @@ This repository aims to:
 
 ## Contents
 
+---
+
+### View Reports
+
+* **🔗 GPT Tagging Report**: [View Report](https://eragriculture.github.io/AI/docs/GPT_tagging.html)
+* **🔗 Use of AI for Data Extraction**: [View Report](https://eragriculture.github.io/AI/docs/Use_of_AI_for_Extraction.html)
+* **🔗 AI Screening Report**: [View Report](https://eragriculture.github.io/AI/docs/Screening_GPT.html)
+* **🔗 OpenAlex vignette**: [View Report](https://eragriculture.github.io/AI/docs/OA-vignette.html)
+* **🔗 Web Scraping for data extraction with make.com**: [View Report](https://eragriculture.github.io/AI/docs/GCA-web-scraping.html)
+
+---
+
+
 ### Repository Structure
 
 * **`AI.Rproj`** (optional): R Project file to organize and manage the repository.
 * **`scripts/`**: R scripts for querying, screening, tagging, comparison, and evaluation.
-
-  * `openalex_query.R`, `screen.R`, `tag.R`, `compare_wos.R`, `evaluate.R`
-* **`configs/`**: YAML configs (criteria, schemas, prompt templates).
-* **`queries/`**: Search term lists (YAML/TXT).
-* **`data/`**
-
-  * `raw/`: OpenAlex exports (`.ndjson`/`.jsonl`)
-  * `processed/`: screened/tagged tables (e.g., Parquet)
-  * `external/`: optional WoS or other exports (not versioned)
-* **`docs/`**: HTML reports published via GitHub Pages (links below).
-* **`renv.lock`**: Pinned R package versions (created by `renv`).
+* **`data/`** : Datasets used for analsys
+* **`docs/`**: HTML reports published via GitHub Pages (links above).
 * **`README.md`**: This file.
 
 ---
 
-## Features
 
-1. **OpenAlex Querying**
-
-   * Generate and run search strategies; export results to NDJSON/JSONL.
-   * Rate-limit friendly + simple resumption.
-
-2. **AI Screening & Tagging**
-
-   * Apply inclusion/exclusion criteria from YAML.
-   * Extract keywords/tags; harmonize fields for downstream analysis.
-
-3. **Benchmarking & Evaluation**
-
-   * Compare OpenAlex pulls with WoS exports.
-   * Evaluate tagging quality against manual or gold labels.
-
-4. **Reports & Transparency**
-
-   * Render shareable HTML reports with figures and tables.
-   * Continuous improvement via versioned configs and logs.
-
----
 
 ## Getting Started
 
-### 1) Setup (R)
+### Setup (R)
 
 ```bash
 # clone
@@ -81,50 +63,6 @@ R -q -e "install.packages('renv', repos='https://cloud.r-project.org'); renv::re
 
 > **Note:** OpenAlex is public—no API key needed. If you use an LLM for screening/tagging, add keys to **~/.Renviron** (see **Configuration**).
 
-### 2) Minimal Pipeline
-
-```bash
-# Query OpenAlex using a YAML of search terms
-Rscript scripts/openalex_query.R \
-  --query-file queries/search_terms.yaml \
-  --since 2010-01-01 \
-  --out data/raw/openalex.ndjson \
-  --limit 50000
-
-# Screen results with AI criteria
-Rscript scripts/screen.R \
-  --in data/raw/openalex.ndjson \
-  --out data/processed/screened.parquet \
-  --model gpt-4o-mini \
-  --policy configs/screening_criteria.yaml
-
-# Tag / keyword extraction
-Rscript scripts/tag.R \
-  --in data/processed/screened.parquet \
-  --out data/processed/tagged.parquet \
-  --model gpt-4o-mini \
-  --schema configs/tag_schema.yaml
-
-# (Optional) Benchmark against WoS
-Rscript scripts/compare_wos.R \
-  --openalex data/raw/openalex.ndjson \
-  --wos data/external/wos_export.csv \
-  --out reports/wos_comparison.csv
-```
-
-> Prefer columnar formats like **Parquet** via `{arrow}` for speed and memory.
-
----
-
-## View Reports
-
-* **🔗 GPT Tagging Report**: [View Report](https://eragriculture.github.io/AI/docs/GPT_tagging.html)
-* **🔗 Use of AI for Data Extraction**: [View Report](https://eragriculture.github.io/AI/docs/Use_of_AI_for_Extraction.html)
-* **🔗 AI Screening Report**: [View Report](https://eragriculture.github.io/AI/docs/Screening_GPT.html)
-* **🔗 OpenAlex vignette**: [View Report](https://eragriculture.github.io/AI/docs/OA-vignette.html)
-* **🔗 Web Scraping for data extraction with make.com**: [View Report](https://eragriculture.github.io/AI/docs/GCA-web-scraping.html)
-
----
 
 ## Configuration
 
@@ -133,55 +71,19 @@ Create or edit `~/.Renviron` (user-level) or a project `.Renviron`:
 ```ini
 # LLM providers (examples)
 OPENAI_API_KEY=...
-ANTHROPIC_API_KEY=...
-AZURE_OPENAI_ENDPOINT=...
-AZURE_OPENAI_API_KEY=...
-
-# runtime
-REQUESTS_TIMEOUT=60
-CACHE_DIR=.cache
 ```
 
 Reload with `readRenviron("~/.Renviron")` inside R as needed.
-
-* **OpenAlex**: no key required; be polite with rate limits.
-* **Privacy**: keep proprietary exports (e.g., WoS CSVs) in `data/external/` and **do not commit** unless licensed.
-* **SPDX**: optional headers in R files, e.g., `# SPDX-License-Identifier: MIT`.
 
 ---
 
 ## Data Sources
 
+* **ERA Dataset**: A compilation of scientific papers focused on agricultural practices and their outcomes across various geographies.
 * **OpenAlex** — modern, open scholarly metadata and abstracts for discovery and analysis.
-* **Web of Science (optional)** — used for comparisons where access permits.
-* **Generated screening/tagging data** — produced by scripts and stored under `data/processed/`.
 
 ---
 
-## How to Use the Reports
-
-Open the HTML files in `docs/` (or visit GitHub Pages links above). Each report includes:
-
-* Query summaries and counts
-* Screening and tagging summaries
-* Keyword trends and topic overviews
-* (Optional) Comparisons with WoS exports
-
----
-
-## FAQ
-
-**I get zero results.**
-• Loosen date filters; verify `--since`.
-• Validate YAML (spaces, not tabs).
-
-**Rate limits or timeouts.**
-• Add pauses/backoff in your fetcher; split large queries.
-
-**LLM costs.**
-• Run a small sample first (e.g., `--limit 500`) and cache responses.
-
----
 
 ## Citing
 
@@ -213,7 +115,6 @@ If you use this repository, please cite the software and, when available, the ar
 ## Links
 
 * ERA GitHub: [https://github.com/CIAT/ERA_dev](https://github.com/CIAT/ERA_dev)
-* Excel Template (evidence extraction): [https://github.com/CIAT/ERA_dev/blob/main/data_entry/industrious_elephant_2023/excel_data_extraction_template/V2.0.28%20-%20Industrious%20Elephant.xlsm](https://github.com/CIAT/ERA_dev/blob/main/data_entry/industrious_elephant_2023/excel_data_extraction_template/V2.0.28%20-%20Industrious%20Elephant.xlsm)
 
 ---
 
@@ -224,7 +125,6 @@ This project is led and implemented by the **Climate Action Lever** of the **All
 * **Lolita Muller** — *Senior Research Associate & Lead Developer*
   Email: [m.lolita@cgiar.org](mailto:m.lolita@cgiar.org)
 
-(Contributions welcome via PR.)
 
 ---
 
@@ -238,7 +138,7 @@ This project is led and implemented by the **Climate Action Lever** of the **All
 
 ## Acknowledgments
 
-This work is supported under the **Climate** area within the **CGIAR Excellence in Agronomy Initiative (EiA)**. Thanks to **OpenAlex** and to any data providers used (e.g., WoS) for enabling open research.
+This work is supported under the **Climate** area within the **CGIAR Excellence in Agronomy Initiative (EiA)**.
 
 ---
 
