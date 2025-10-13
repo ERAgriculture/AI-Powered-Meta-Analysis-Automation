@@ -11,11 +11,11 @@ output:
     toc_float: true
     code_folding: show
     self_contained: true
-knit: (function(input, ...) { rmarkdown::render(input, output_dir = "docs") })
 ---
 
 # GCA Project Extraction – Scenario Report
 ## 1. Executive Summary
+
 The “GCA project extraction” scenario is designed to automatically retrieve and parse project information from gca.org/projects/. The workflow extracts project URLs and then scrapes detailed project data—such as headings, descriptions, investment details, beneficiaries, and implementation periods—from individual project pages. Finally, the extracted data is inserted or updated into a Google Sheets spreadsheet for further analysis and reporting.
 
 ## 2. Introduction
@@ -24,7 +24,10 @@ In today’s data-driven environment, automating data extraction and processing 
 
 The objective is to simultaneously extract comprehensive information from every GCA project page.
 
-![Screenshot](docs/gca_website.png)
+![](../docs/gca_website.png)
+
+
+
 
 ## 3. Scenario Overview
 The scenario, titled "GCA project extraction", comprises several interconnected modules that perform the following tasks:
@@ -36,7 +39,7 @@ The scenario, titled "GCA project extraction", comprises several interconnected 
 - Data Parsing: Multiple regular expression modules extract specific details from the HTML content.
 - Google Sheets Integration: The extracted data is written to a Google Sheets spreadsheet, both as new rows and via updates.
 
-![Screenshot](docs/GCA-make.com-scenario.png)
+![](../docs/GCA-make.com-scenario.png)
 
 
 
@@ -114,7 +117,7 @@ This integration not only provides a centralized view of all extracted data but 
 
 The output is a Google Sheets document where each row represents a project link along with its complete set of extracted details. Although the current format relies on HTML and regex code and could benefit from refinement, it successfully captures all the necessary information.
 
-![Screenshot](docs/make-scenario-result.png)
+![](../docs/make-scenario-result.png)
 
 
 
