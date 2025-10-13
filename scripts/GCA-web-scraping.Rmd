@@ -11,12 +11,14 @@ output:
     toc_float: true
     code_folding: show
     self_contained: true
+    knit: (function(input, ...) { rmarkdown::render(input, output_dir = "../docs") })
+
 ---
 
 # GCA Project Extraction – Scenario Report
 ## 1. Executive Summary
 
-The “GCA project extraction” scenario is designed to automatically retrieve and parse project information from gca.org/projects/. The workflow extracts project URLs and then scrapes detailed project data—such as headings, descriptions, investment details, beneficiaries, and implementation periods—from individual project pages. Finally, the extracted data is inserted or updated into a Google Sheets spreadsheet for further analysis and reporting.
+The “GCA project extraction” scenario is designed to automatically retrieve and parse project information from gca.org/projects/. The workflow extracts project URLs and then scrapes detailed project data,such as headings, descriptions, investment details, beneficiaries, and implementation periods,from individual project pages. Finally, the extracted data is inserted or updated into a Google Sheets spreadsheet for further analysis and reporting.
 
 ## 2. Introduction
 In today’s data-driven environment, automating data extraction and processing is critical for maintaining up-to-date insights. This scenario was developed to streamline the extraction of project details from the GCA website and to store this information in a structured format within Google Sheets. The automated workflow improves accuracy and reduces manual work, ensuring that the data remains current and actionable.
