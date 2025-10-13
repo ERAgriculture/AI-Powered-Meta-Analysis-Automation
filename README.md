@@ -25,7 +25,7 @@ This repository aims to:
 
 ### View Reports
 
-* **🔗 GPT Tagging Report**: [View Report](https://eragriculture.github.io/AI-Powered-Meta-Analysis-Automation/docs/GPT_tagging.html)
+* **🔗 GPT Tagging Report**: [View Report](https://eragriculture.github.io/AI-Powered-Meta-Analysis-Automation/docs/gpt_tagging.html)
 * **🔗 Use of AI for Data Extraction**: [View Report](https://eragriculture.github.io/AI-Powered-Meta-Analysis-Automation/docs/Use_of_AI_for_Extraction.html)
 * **🔗 AI Screening Report**: [View Report](https://eragriculture.github.io/AI-Powered-Meta-Analysis-Automation/docs/Screening_GPT.html)
 * **🔗 OpenAlex vignette**: [View Report](https://eragriculture.github.io/AI-Powered-Meta-Analysis-Automation/docs/OA-vignette.html)
