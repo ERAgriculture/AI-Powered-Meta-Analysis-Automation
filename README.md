@@ -25,11 +25,11 @@ This repository aims to:
 
 ### View Reports
 
-* **🔗 GPT Tagging Report**: [View Report](https://eragriculture.github.io/AI/docs/GPT_tagging.html)
-* **🔗 Use of AI for Data Extraction**: [View Report](https://eragriculture.github.io/AI/docs/Use_of_AI_for_Extraction.html)
-* **🔗 AI Screening Report**: [View Report](https://eragriculture.github.io/AI/docs/Screening_GPT.html)
-* **🔗 OpenAlex vignette**: [View Report](https://eragriculture.github.io/AI/docs/OA-vignette.html)
-* **🔗 Web Scraping for data extraction with make.com**: [View Report](https://eragriculture.github.io/AI/docs/GCA-web-scraping.html)
+* **🔗 GPT Tagging Report**: [View Report](https://eragriculture.github.io/AI-Powered-Meta-Analysis-Automation/docs/GPT_tagging.html)
+* **🔗 Use of AI for Data Extraction**: [View Report](https://eragriculture.github.io/AI-Powered-Meta-Analysis-Automation/docs/Use_of_AI_for_Extraction.html)
+* **🔗 AI Screening Report**: [View Report](https://eragriculture.github.io/AI-Powered-Meta-Analysis-Automation/docs/Screening_GPT.html)
+* **🔗 OpenAlex vignette**: [View Report](https://eragriculture.github.io/AI-Powered-Meta-Analysis-Automation/docs/OA-vignette.html)
+* **🔗 Web Scraping for data extraction with make.com**: [View Report](https://eragriculture.github.io/AI-Powered-Meta-Analysis-Automation/docs/GCA-web-scraping.html)
 
 ---
 
