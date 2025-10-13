@@ -20,7 +20,6 @@ output:
     toc_float: true
     code_folding: show
     self_contained: true
-knit: (function(input, ...) { rmarkdown::render(input, output_dir = "docs") })
 ---
 # Screening Agricultural Research Papers with AI
 
@@ -365,14 +364,13 @@ cost_summary <- data.frame(
   )
 )
 
-# Display cost summary
+# Display cost summary table
 kable(cost_summary, format = "html", caption = "GPT Processing Cost Summary") %>%
   kable_styling(full_width = FALSE, bootstrap_options = c("striped", "hover", "condensed"))
 
 # Display cost estimates for different dataset sizes
 kable(cost_estimates, format = "html", caption = "Estimated Costs for Different Dataset Sizes") %>%
   kable_styling(full_width = FALSE, bootstrap_options = c("striped", "hover", "condensed"))
-
 
 
 ```
