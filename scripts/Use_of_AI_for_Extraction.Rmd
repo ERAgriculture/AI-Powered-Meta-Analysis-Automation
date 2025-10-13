@@ -434,7 +434,7 @@ library(tidyr)
 `%||%` <- function(a, b) if (!is.null(a) && length(a) && !is.na(a)) a else b
 
 # ── 1  Ontology (Goat / Sheep / Cattle) ───────────────────────────────────────
-onto <- read_csv("herd_ontology.csv", show_col_types = FALSE) %>%
+onto <- read_csv("C:/Users/mlolita/OneDrive - CGIAR/Documents/AI-Powered-Meta-Analysis-Automation/herd_ontology.csv", show_col_types = FALSE) %>%
   mutate(across(c(canonical_label, synonyms), str_trim)) %>%
   mutate(canonical_label_lc = str_to_lower(canonical_label),
          synonyms_lc        = str_to_lower(synonyms)) %>%

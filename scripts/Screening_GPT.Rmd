@@ -42,11 +42,11 @@ library(DT)
 ```{r,message=FALSE}
 
 # Extract bibliography data
-Bib <- read_csv("ACDC_abstracts.csv")
-
-set.seed(444)
-Bib <- Bib %>%
-  sample_n(100)
+# Bib <- read_csv("ACDC_abstracts.csv")
+# 
+# set.seed(444)
+# Bib <- Bib %>%
+#   sample_n(100)
 
 
 ```
@@ -216,13 +216,12 @@ kable(criteria_table, format = "html", caption = "Summary of Prompts based on in
 ```
 
 ```{r,message=FALSE}
-
 #use the file's location
-ERA_screened_GPT <- read_csv("ERA_screened_GPT.csv")
+ERA_screened_GPT <- read_csv("C:/Users/mlolita/OneDrive - CGIAR/Documents/AI/data/ERA_screened_GPT.csv")
 
 
 # Load data
-ERA_screened_GPT <- read_csv("ERA_screened_GPT.csv") %>%
+ERA_screened_GPT <- read_csv("C:/Users/mlolita/OneDrive - CGIAR/Documents/AI/data/ERA_screened_GPT.csv") %>%
   select(`Abstract Note`, location_LA_CA, field_study, primary_data, study_type,
          focus_agriculture, target_crop_livestock, tested_practices, is_LAC_CAC, Status, Status_AI)
 

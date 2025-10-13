@@ -59,6 +59,7 @@ library(ERAg)
 library(ggplot2)
 library(patchwork)
 
+
 ```
 
 ### Load bibliography
@@ -313,7 +314,7 @@ To evaluate the efficiency of ChatGPT in tagging, we will also perform the proce
 
 ```{r,message=FALSE,warning=FALSE}
 
-ERA_complete <- read_csv("ERA_TEST_YES (version 1).xlsb.csv")
+ERA_complete <- read_csv("C:/Users/mlolita/OneDrive - CGIAR/Documents/AI-Powered-Meta-Analysis-Automation/data/ERA_TEST_YES (version 1).xlsb.csv")
 
 #select relevant columns for analysis 
 
